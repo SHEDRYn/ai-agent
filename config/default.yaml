@@ -4,7 +4,7 @@
 llm:
   model: "openrouter/openai/gpt-oss-20b"
   provider: "openai"  # openai, anthropic, etc.
-  api_key: null  # Задается через переменную окружения OPENAI_API_KEY
+  api_key: null  # Задается через переменную окружения OPENAI_API_KEY или файл .env
   base_url: "http://litellm.dtc.tatar/"  # Для кастомных провайдеров
   temperature: 0.7
   max_tokens: 2000
@@ -20,7 +20,7 @@ tools:
   codebase_search:
     enabled: true
     index_path: ".code_index"
-    embedding_model: "text-embedding-3-small"  # или "text-embedding-ada-002"
+    embedding_model: "gp-embedding"  # или "text-embedding-ada-002"
   
   grep:
     enabled: true

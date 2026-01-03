@@ -1,14 +1,16 @@
 # Core dependencies
-litellm>=1.30.0
+openai==2.14.0
 pydantic>=2.5.0
 click>=8.1.7
 aiohttp>=3.9.0
 pyyaml>=6.0.1
+python-dotenv==1.2.1
 
 # Vector database for code indexing
 chromadb>=0.4.22
 
-# Embeddings for semantic search - используем litellm embedding API
+# Embeddings for semantic search - используем litellm embedding API (в indexer.py)
+litellm>=1.30.0
 
 # Async utilities
 asyncio-mqtt>=0.16.1

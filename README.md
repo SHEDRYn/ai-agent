@@ -21,18 +21,24 @@
 pip install -r requirements.txt
 ```
 
-3. Настройте API ключ (для OpenAI или другого провайдера):
+3. Настройте API ключ через файл `.env` в корне проекта:
 
 ```bash
-export OPENAI_API_KEY="your-api-key-here"
+# Создайте файл .env
+echo "OPENAI_API_KEY=your-api-key-here" > .env
 ```
 
 Или для других провайдеров через litellm:
 
 ```bash
-export ANTHROPIC_API_KEY="your-key"
+echo "ANTHROPIC_API_KEY=your-key" >> .env
 # или
-export GROQ_API_KEY="your-key"
+echo "GROQ_API_KEY=your-key" >> .env
+```
+
+Также можно использовать переменные окружения системы:
+```bash
+export OPENAI_API_KEY="your-api-key-here"
 ```
 
 ## Конфигурация

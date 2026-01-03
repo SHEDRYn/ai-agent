@@ -1,10 +1,10 @@
-"""Клиент для работы с языковыми моделями через litellm"""
+"""Клиент для работы с языковыми моделями через OpenAI API"""
 
+import asyncio
 import os
 from typing import Any, Dict, List, Optional
 
-import litellm
-from litellm import completion
+from openai import AsyncOpenAI
 
 from .models import ConversationHistory, Message, ToolDefinition
 
@@ -34,13 +34,14 @@ class LLMClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-        # Настройка litellm
+        # Настройка OpenAI клиента
+        client_kwargs = {}
         if api_key:
-            os.environ["OPENAI_API_KEY"] = api_key
-
+            client_kwargs["api_key"] = api_key
         if base_url:
-            # Для кастомных провайдеров через litellm
-            litellm.api_base = base_url
+            client_kwargs["base_url"] = base_url
+
+        self.client = AsyncOpenAI(**client_kwargs)
 
     async def chat(
         self,
@@ -73,13 +74,13 @@ class LLMClient:
             kwargs["tool_choice"] = tool_choice
 
         try:
-            response = await litellm.acompletion(**kwargs)
+            response = await self.client.chat.completions.create(**kwargs)
             return self._parse_response(response)
         except Exception as e:
             raise RuntimeError(f"Ошибка при вызове LLM: {str(e)}")
 
     def _parse_response(self, response) -> Dict[str, Any]:
-        """Парсинг ответа от litellm в стандартный формат"""
+        """Парсинг ответа от OpenAI API в стандартный формат"""
         choice = response.choices[0]
         message = choice.message
 
@@ -89,7 +90,7 @@ class LLMClient:
         }
 
         # Обработка tool_calls
-        if hasattr(message, "tool_calls") and message.tool_calls:
+        if message.tool_calls:
             result["tool_calls"] = []
             for tc in message.tool_calls:
                 result["tool_calls"].append(
@@ -129,3 +130,42 @@ class LLMClient:
             tools_dict = [tool.dict() for tool in tools]
 
         return await self.chat(messages, tools_dict, tool_choice)
+
+
+async def main():
+    """Тестовая функция для проверки работы LLM клиента"""
+    print("Инициализация LLM клиента...")
+
+    # Создаем клиент (API ключ можно передать через переменную окружения)
+    client = LLMClient(
+        model="openrouter/openai/gpt-oss-20b",  # Используем более дешевую модель для теста
+        base_url="http://litellm.dtc.tatar/",
+        temperature=0.7,
+    )
+
+    print("Отправка тестового запроса...")
+
+    # Простой тестовый запрос
+    messages = [
+        {"role": "user", "content": "Привет! Ответь коротко: что такое Python?"}
+    ]
+
+    try:
+        response = await client.chat(messages)
+        print("\n" + "=" * 50)
+        print("Ответ от LLM:")
+        print("=" * 50)
+        print(f"Роль: {response.get('role', 'N/A')}")
+        print(f"Содержание: {response.get('content', 'N/A')}")
+        if response.get("tool_calls"):
+            print(f"Tool calls: {response.get('tool_calls')}")
+        print("=" * 50)
+    except Exception as e:
+        print(f"\nОшибка при выполнении запроса: {e}")
+        print(
+            "Убедитесь, что установлен API ключ через переменную окружения OPENAI_API_KEY"
+        )
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

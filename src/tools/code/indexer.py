@@ -49,8 +49,6 @@ class CodeIndexer:
         if base_url:
             litellm.api_base = base_url
 
-        logger.info(f"Использование embedding модели через API: {embedding_model}")
-
         # Инициализация ChromaDB
         os.makedirs(index_path, exist_ok=True)
         self.client = chromadb.PersistentClient(
