@@ -1,0 +1,111 @@
+# Конфигурация по умолчанию для ИИ-агента
+
+# Настройки LLM
+llm:
+  model: "openrouter/openai/gpt-oss-20b"
+  provider: "openai"  # openai, anthropic, etc.
+  api_key: null  # Задается через переменную окружения OPENAI_API_KEY
+  base_url: "http://litellm.dtc.tatar/"  # Для кастомных провайдеров
+  temperature: 0.7
+  max_tokens: 2000
+
+# Настройки агента
+agent:
+  max_iterations: 20
+  workspace_root: "."
+
+# Инструменты
+tools:
+  # Инструменты кода
+  codebase_search:
+    enabled: true
+    index_path: ".code_index"
+    embedding_model: "text-embedding-3-small"  # или "text-embedding-ada-002"
+  
+  grep:
+    enabled: true
+  
+  glob_file_search:
+    enabled: true
+  
+  # Инструменты файлов
+  read_file:
+    enabled: true
+  
+  write:
+    enabled: true
+  
+  search_replace:
+    enabled: true
+  
+  delete_file:
+    enabled: true
+  
+  list_dir:
+    enabled: true
+  
+  # Инструменты разработки
+  read_lints:
+    enabled: true
+    default_linter: "auto"  # auto, flake8, pylint, mypy, ruff
+  
+  run_terminal_cmd:
+    enabled: true
+    max_timeout: 300  # секунды
+  
+  todo_write:
+    enabled: true
+    todo_file: ".todo.json"
+  
+  # Внешние инструменты
+  web_search:
+    enabled: true
+    provider: "duckduckgo"  # duckduckgo, tavily
+
+# MCP серверы
+mcpServers:
+  # Context7 MCP (если установлен)
+  # context7:
+  #   command: ["node"]
+  #   args: ["path/to/context7-mcp-server.js"]
+  #   transport: "stdio"
+  #   env: {}
+  
+  # Time MCP (если установлен)
+  # time:
+  #   command: ["node"]
+  #   args: ["path/to/time-mcp-server.js"]
+  #   transport: "stdio"
+  #   env: {}
+
+# Безопасность
+security:
+  # Ограничения для run_terminal_cmd
+  allowed_commands:
+    - "python"
+    - "python3"
+    - "pip"
+    - "pip3"
+    - "npm"
+    - "node"
+    - "git"
+  
+  # Запрещенные команды
+  forbidden_commands:
+    - "rm -rf"
+    - "format"
+    - "del /f"
+    - "shutdown"
+    - "reboot"
+  
+  # Ограничения путей
+  allowed_paths:
+    - "."  # Только текущая директория
+  
+  # Запрещенные файлы для удаления
+  protected_files:
+    - ".git"
+    - ".env"
+    - "requirements.txt"
+    - "package.json"
+
