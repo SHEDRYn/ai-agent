@@ -2,7 +2,7 @@
 
 import os
 import asyncio
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import logging
 
 from ..base import BaseTool

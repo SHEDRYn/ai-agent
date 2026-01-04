@@ -1,6 +1,5 @@
 """Инструменты для работы с директориями"""
 
-import os
 from pathlib import Path
 from typing import Optional, List, Dict
 import logging

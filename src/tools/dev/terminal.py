@@ -1,11 +1,9 @@
 """Инструменты для выполнения команд в терминале"""
 
-import subprocess
 import asyncio
 from typing import Optional, Dict, Any
 from pathlib import Path
 import logging
-import shlex
 
 from ..base import BaseTool
 

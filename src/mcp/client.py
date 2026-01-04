@@ -1,16 +1,12 @@
 """MCP клиент для взаимодействия с MCP серверами"""
 
 import asyncio
-import json
 import os
 from typing import Dict, Any, List, Optional
-from pathlib import Path
 import logging
 
 from .protocol import (
-    MCPRequest, MCPResponse, MCPError,
-    serialize_request, deserialize_response,
-    RPCErrorCode
+    MCPRequest, MCPResponse, serialize_request, deserialize_response
 )
 
 logger = logging.getLogger(__name__)

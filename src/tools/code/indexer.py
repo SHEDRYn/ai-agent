@@ -1,6 +1,5 @@
 """Индексатор кодовой базы для семантического поиска"""
 
-import asyncio
 import logging
 import os
 import re

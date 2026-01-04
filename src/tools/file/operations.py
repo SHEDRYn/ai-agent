@@ -1,6 +1,5 @@
 """Инструменты для операций с файлами"""
 
-import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 import logging

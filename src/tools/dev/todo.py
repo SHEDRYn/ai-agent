@@ -1,8 +1,7 @@
 """Инструменты для управления списком задач"""
 
 import json
-import yaml
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from pathlib import Path
 from datetime import datetime
 import logging

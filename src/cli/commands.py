@@ -1,7 +1,5 @@
 """CLI команды"""
 
-import asyncio
-import json
 import logging
 import os
 from pathlib import Path
@@ -12,7 +10,6 @@ import yaml
 from ..agent.orchestrator import AgentOrchestrator
 from ..llm.client import LLMClient
 from ..mcp.client import MCPClient
-from ..mcp.servers import load_mcp_config
 from ..tools.code.indexer import CodeIndexer
 from ..tools.code.search import CodebaseSearchTool, GlobFileSearchTool, GrepTool
 from ..tools.dev.linter import ReadLintsTool

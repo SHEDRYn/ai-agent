@@ -1,12 +1,11 @@
 """Клиент для работы с языковыми моделями через OpenAI API"""
 
 import asyncio
-import os
 from typing import Any, Dict, List, Optional
 
 from openai import AsyncOpenAI
 
-from .models import ConversationHistory, Message, ToolDefinition
+from .models import ConversationHistory, ToolDefinition
 
 
 class LLMClient:
