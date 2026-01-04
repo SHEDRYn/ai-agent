@@ -28,14 +28,6 @@ pip install -r requirements.txt
 echo "OPENAI_API_KEY=your-api-key-here" > .env
 ```
 
-Или для других провайдеров через litellm:
-
-```bash
-echo "ANTHROPIC_API_KEY=your-key" >> .env
-# или
-echo "GROQ_API_KEY=your-key" >> .env
-```
-
 Также можно использовать переменные окружения системы:
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
@@ -47,7 +39,7 @@ export OPENAI_API_KEY="your-api-key-here"
 
 ```yaml
 llm:
-  model: "gpt-4"  # или "gpt-3.5-turbo", "claude-3-opus" и т.д.
+  model: "gpt-4o-mini"
   provider: "openai"
   temperature: 0.7
 
