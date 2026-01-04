@@ -1,8 +1,8 @@
 """Инструменты для работы с директориями"""
 
-from pathlib import Path
-from typing import Optional, List, Dict
 import logging
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from ..base import BaseTool
 
@@ -73,7 +73,15 @@ class ListDirTool(BaseTool):
                 if self._should_ignore(entry, ignore_globs):
                     continue
 
-                relative_path = entry.relative_to(self.workspace_root)
+                # Пропускаем записи, которые находятся вне workspace_root
+                if not self._is_in_workspace(entry):
+                    continue
+
+                try:
+                    relative_path = entry.relative_to(self.workspace_root)
+                except ValueError:
+                    # Если не удалось получить относительный путь, пропускаем
+                    continue
 
                 entry_info = {
                     "name": entry.name,
@@ -106,12 +114,31 @@ class ListDirTool(BaseTool):
             path = self.workspace_root / path
         return path.resolve()
 
+    def _is_in_workspace(self, path: Path) -> bool:
+        """Проверка, находится ли путь внутри workspace_root"""
+        try:
+            resolved_path = path.resolve()
+            resolved_workspace = self.workspace_root.resolve()
+            # Используем relative_to для проверки - если путь находится внутри, ошибки не будет
+            resolved_path.relative_to(resolved_workspace)
+            return True
+        except (ValueError, OSError):
+            return False
+
     def _should_ignore(self, path: Path, ignore_globs: List[str]) -> bool:
         """Проверка, нужно ли игнорировать путь"""
         import fnmatch
 
-        relative_path = path.relative_to(self.workspace_root)
-        path_str = str(relative_path)
+        # Если путь находится вне workspace_root, игнорируем его
+        if not self._is_in_workspace(path):
+            return True
+
+        try:
+            relative_path = path.relative_to(self.workspace_root)
+            path_str = str(relative_path)
+        except ValueError:
+            # Если не удалось получить относительный путь, игнорируем
+            return True
 
         for pattern in ignore_globs:
             # Упрощенная проверка glob
@@ -121,8 +148,14 @@ class ListDirTool(BaseTool):
                 return True
             # Проверка родительских директорий
             for parent in path.parents:
-                parent_relative = parent.relative_to(self.workspace_root)
-                if fnmatch.fnmatch(str(parent_relative), pattern):
-                    return True
+                # Проверяем только родительские директории внутри workspace_root
+                if not self._is_in_workspace(parent):
+                    break
+                try:
+                    parent_relative = parent.relative_to(self.workspace_root)
+                    if fnmatch.fnmatch(str(parent_relative), pattern):
+                        return True
+                except ValueError:
+                    break
 
         return False
