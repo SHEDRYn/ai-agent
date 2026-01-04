@@ -1,6 +1,7 @@
 """MCP клиент для взаимодействия с MCP серверами"""
 
 import asyncio
+import json
 import logging
 import os
 from typing import Any, Dict, List, Optional
@@ -82,7 +83,7 @@ class MCPClient:
             id=self._next_id(),
             method="initialize",
             params={
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": "2026-01-04",
                 "capabilities": {},
                 "clientInfo": {"name": "ai-agent", "version": "0.1.0"},
             },
@@ -236,13 +237,13 @@ class MCPClient:
         # Извлечение контента
         result_content = response.result.get("content", [])
 
-        # Преобразование контента в строку
+        # Форматирование результата
         if result_content:
             texts = []
             for item in result_content:
                 if item.get("type") == "text":
                     texts.append(item.get("text", ""))
-            return "\n".join(texts) if texts else result_content
+            return json.loads("\n".join(texts)) if texts else result_content
 
         return response.result
 
