@@ -64,12 +64,17 @@ tools:
 
 # MCP серверы
 mcpServers:
-  # Context7 MCP (если установлен)
-  # context7:
-  #   command: ["node"]
-  #   args: ["path/to/context7-mcp-server.js"]
-  #   transport: "stdio"
-  #   env: {}
+  # server_name:
+  #   url: "https://example.com/mcp"  # обязательное поле
+  #   transport: "http"
+  #   api_key: "optional_token"  # опционально
+  #   headers:  # опционально
+  #     X-Custom-Header: "value"
+  #   timeout: 30  # опционально, секунды
+
+  context7:
+    url: "https://mcp.context7.com/mcp"
+    transport: "http"
   
   time:
     command: "/Users/karim/.local/bin/uvx"

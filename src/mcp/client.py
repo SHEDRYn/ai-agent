@@ -6,6 +6,9 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+import aiohttp
+from aiohttp import ClientSession
+
 from .protocol import MCPRequest, MCPResponse, deserialize_response, serialize_request
 
 logger = logging.getLogger(__name__)
@@ -74,8 +77,40 @@ class MCPClient:
         }
 
     async def _connect_http(self, name: str, config: Dict[str, Any]) -> None:
-        """Подключение через HTTP (заглушка для будущей реализации)"""
-        raise NotImplementedError("HTTP транспорт пока не реализован")
+        """Подключение через HTTP"""
+        url = config.get("url")
+        if not url:
+            raise ValueError(f"URL обязателен для HTTP транспорта сервера {name}")
+
+        # Извлечение опциональных параметров
+        api_key = config.get("api_key") or config.get("token")
+        custom_headers = config.get("headers", {})
+        timeout_seconds = config.get("timeout", 30)
+
+        # Подготовка заголовков
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        }
+
+        # Добавление аутентификации
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+        # Добавление кастомных заголовков
+        headers.update(custom_headers)
+
+        # Создание сессии с таймаутом
+        timeout = aiohttp.ClientTimeout(total=timeout_seconds)
+        session = ClientSession(headers=headers, timeout=timeout)
+
+        self.servers[name] = {
+            "session": session,
+            "url": url,
+            "transport": "http",
+            "tools": [],
+            "timeout": timeout_seconds,
+        }
 
     async def _initialize(self, name: str) -> None:
         """Инициализация MCP соединения"""
@@ -123,6 +158,8 @@ class MCPClient:
 
         if server["transport"] == "stdio":
             return await self._send_stdio_request(server, request)
+        elif server["transport"] == "http":
+            return await self._send_http_request(server, request)
         else:
             raise ValueError(f"Неподдерживаемый транспорт: {server['transport']}")
 
@@ -148,6 +185,41 @@ class MCPClient:
             return response
         except Exception as e:
             logger.error(f"Ошибка при отправке запроса: {e}")
+            raise
+
+    async def _send_http_request(
+        self, server: Dict[str, Any], request: MCPRequest
+    ) -> MCPResponse:
+        """Отправка запроса через HTTP"""
+        session = server["session"]
+        url = server["url"]
+
+        try:
+            # Отправка POST запроса (сериализация в JSON происходит автоматически через json параметр)
+            async with session.post(url, json=request.dict(exclude_none=True)) as resp:
+                # Проверка статус-кода
+                if resp.status >= 400:
+                    error_text = await resp.text()
+                    logger.error(
+                        f"HTTP ошибка {resp.status} от MCP сервера: {error_text}"
+                    )
+                    raise RuntimeError(
+                        f"HTTP ошибка {resp.status} от MCP сервера: {error_text}"
+                    )
+
+                # Чтение и десериализация ответа
+                response_data = await resp.json()
+                response = MCPResponse(**response_data)
+                return response
+
+        except asyncio.TimeoutError as e:
+            logger.error(f"Таймаут при отправке HTTP запроса: {e}")
+            raise RuntimeError(f"Таймаут при отправке HTTP запроса к MCP серверу")
+        except aiohttp.ClientError as e:
+            logger.error(f"Сетевая ошибка при отправке HTTP запроса: {e}")
+            raise RuntimeError(f"Сетевая ошибка при отправке HTTP запроса: {e}")
+        except Exception as e:
+            logger.error(f"Ошибка при отправке HTTP запроса: {e}")
             raise
 
     def _next_id(self) -> int:
@@ -243,7 +315,25 @@ class MCPClient:
             for item in result_content:
                 if item.get("type") == "text":
                     texts.append(item.get("text", ""))
-            return json.loads("\n".join(texts)) if texts else result_content
+
+            if texts:
+                text_content = "\n".join(texts).strip()
+                if not text_content:
+                    logger.warning(f"Пустой ответ от инструмента {tool_name}")
+                    return result_content
+
+                try:
+                    # Пытаемся распарсить как JSON
+                    return json.loads(text_content)
+                except json.JSONDecodeError as e:
+                    # Если не JSON, возвращаем как строку
+                    logger.debug(
+                        f"Ответ инструмента {tool_name} не является JSON: {e}, "
+                        f"возвращаем как строку. Содержимое: {text_content[:100]}"
+                    )
+                    return text_content
+            else:
+                return result_content
 
         return response.result
 
@@ -253,10 +343,20 @@ class MCPClient:
             return
 
         server = self.servers[name]
-        if server["transport"] == "stdio" and server["process"]:
+
+        if server["transport"] == "stdio" and server.get("process"):
             process = server["process"]
             process.terminate()
             await process.wait()
+        elif server["transport"] == "http" and "session" in server:
+            session = server["session"]
+            try:
+                if not session.closed:
+                    await session.close()
+                # Ждем завершения всех операций
+                await asyncio.sleep(0.1)
+            except Exception as e:
+                logger.warning(f"Ошибка при закрытии HTTP сессии для {name}: {e}")
 
         del self.servers[name]
         logger.info(f"Отключен от MCP сервера {name}")
@@ -264,4 +364,7 @@ class MCPClient:
     async def disconnect_all(self) -> None:
         """Отключение от всех серверов"""
         for name in list(self.servers.keys()):
-            await self.disconnect_server(name)
+            try:
+                await self.disconnect_server(name)
+            except Exception as e:
+                logger.warning(f"Ошибка при отключении от сервера {name}: {e}")

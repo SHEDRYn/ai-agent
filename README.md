@@ -147,11 +147,7 @@ python -m src.cli.main index /path/to/project
 
 ```yaml
 mcpServers:
-  context7:
-    command: ["node"]  # или строка: "/path/to/command"
-    args: ["path/to/context7-server.js"]
-    transport: "stdio"  # stdio или http
-    env: {}
+  # Пример сервера с stdio транспортом
   time:
     command: "uvx"
     args:
@@ -159,6 +155,15 @@ mcpServers:
       - "--local-timezone=Europe/Moscow"
     transport: "stdio"
     env: {}
+  
+  # Пример сервера с HTTP транспортом
+  context7:
+    url: "https://mcp.context7.com/mcp"  # обязательное поле
+    transport: "http"
+    api_key: "optional_token"  # опционально
+    headers:  # опционально
+      X-Custom-Header: "value"
+    timeout: 30  # опционально, секунды
 ```
 
 **Транспорт**: Поддерживается `stdio` и `http`.
