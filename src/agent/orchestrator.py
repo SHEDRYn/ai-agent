@@ -66,7 +66,7 @@ class AgentOrchestrator:
             logger.debug(f"Итерация {iteration}/{self.max_iterations}")
 
             # Получаем доступные инструменты
-            tools = await self._get_available_tools()
+            tools = await self._get_available_tools(iteration == 1)
 
             # Запрашиваем ответ от LLM
             try:
@@ -122,7 +122,7 @@ class AgentOrchestrator:
         # Достигнут лимит итераций
         return "Достигнут максимальный лимит итераций. Попробуйте упростить запрос."
 
-    async def _get_available_tools(self) -> list[Dict[str, Any]]:
+    async def _get_available_tools(self, logs: bool = False) -> list[Dict[str, Any]]:
         """Получить список доступных инструментов"""
         tools = self.tool_registry.get_tools_as_dict()
 
@@ -134,9 +134,18 @@ class AgentOrchestrator:
             except Exception as e:
                 logger.warning(f"Ошибка при получении MCP инструментов: {e}")
 
+        # Выводим список доступных инструментов
+        if logs:
+            print("> List tools")
+            tool_names = [tool["function"]["name"] for tool in tools]
+            for tool_name in sorted(tool_names):
+                print(f"\t- {tool_name}")
+            print("")
         return tools
 
-    async def _execute_tool_call(self, tool_call: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_tool_call(
+        self, tool_call: Dict[str, Any], logs: bool = True
+    ) -> Dict[str, Any]:
         """Выполнить вызов инструмента"""
         tool_name = tool_call["function"]["name"]
         arguments_str = tool_call["function"]["arguments"]
@@ -145,6 +154,14 @@ class AgentOrchestrator:
             arguments = json.loads(arguments_str)
         except json.JSONDecodeError as e:
             raise ValueError(f"Невалидный JSON в аргументах: {e}")
+
+        if logs:
+            # Выводим информацию о вызове инструмента
+            print(f"> {tool_name}")
+            print("```Request")
+            print(json.dumps(arguments, indent=2, ensure_ascii=False))
+            print("```")
+            print("✓ Approved")
 
         # Проверяем, локальный это инструмент или MCP
         if self.tool_registry.get_tool(tool_name):
@@ -155,6 +172,13 @@ class AgentOrchestrator:
             result = await self.mcp_client.call_tool(tool_name, arguments)
         else:
             raise ValueError(f"Инструмент не найден: {tool_name}")
+
+        if logs:
+            # Выводим результат работы инструмента
+            print("```Response")
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            print("```")
+            print("")
 
         return {"tool_call_id": tool_call["id"], "name": tool_name, "result": result}
 
