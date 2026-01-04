@@ -148,11 +148,22 @@ python -m src.cli.main index /path/to/project
 ```yaml
 mcpServers:
   context7:
-    command: ["node"]
+    command: ["node"]  # или строка: "/path/to/command"
     args: ["path/to/context7-server.js"]
+    transport: "stdio"  # stdio или http
+    env: {}
+  time:
+    command: "uvx"
+    args:
+      - "mcp-server-time"
+      - "--local-timezone=Europe/Moscow"
     transport: "stdio"
     env: {}
 ```
+
+**Транспорт**: Поддерживается `stdio` и `http`.
+
+**Загрузка инструментов**: При запуске агент автоматически подключается к каждому MCP серверу из конфигурации, выполняет инициализацию протокола и загружает список доступных инструментов. Все инструменты из MCP серверов автоматически добавляются к набору доступных инструментов агента и могут использоваться LLM для выполнения задач. Инструменты из MCP серверов имеют префикс `имя_сервера.имя_инструмента` (например, `time.get_current_time`).
 
 ## Структура проекта
 

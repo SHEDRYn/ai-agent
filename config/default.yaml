@@ -71,12 +71,13 @@ mcpServers:
   #   transport: "stdio"
   #   env: {}
   
-  # Time MCP (если установлен)
-  # time:
-  #   command: ["node"]
-  #   args: ["path/to/time-mcp-server.js"]
-  #   transport: "stdio"
-  #   env: {}
+  time:
+    command: "/Users/karim/.local/bin/uvx"
+    args:
+      - "mcp-server-time"
+      - "--local-timezone=Europe/Moscow"
+    transport: "stdio"
+    env: {}
 
 # Безопасность
 security:
